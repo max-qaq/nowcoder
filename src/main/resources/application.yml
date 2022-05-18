@@ -1,0 +1,15 @@
+# 应用名称
+spring:
+  application:
+    name: nowcoder
+  # 模板编码
+  thymeleaf:
+    encoding: UTF-8
+  datasource:
+    username: root
+    password: 4587889
+    url: jdbc:mysql://localhost:3306/nowcoder?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.jdbc.Driver
+# 应用服务 WEB 访问端口
+server:
+  port: 9099
