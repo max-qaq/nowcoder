@@ -10,6 +10,11 @@ spring:
     password: 4587889
     url: jdbc:mysql://localhost:3306/nowcoder?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
     driver-class-name: com.mysql.jdbc.Driver
+#    邮件
+  mail:
+    host: smtp.qq.com
+    username: 2582130596@qq.com
+    password: witdneatweradjab
 # 应用服务 WEB 访问端口
 server:
   port: 9099
