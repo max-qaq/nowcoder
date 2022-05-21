@@ -18,3 +18,9 @@ spring:
 # 应用服务 WEB 访问端口
 server:
   port: 9099
+  servlet:
+    context-path: /community
+#域名地址
+community:
+  path:
+    domain: http://localhost:9099
