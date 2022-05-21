@@ -24,3 +24,7 @@ server:
 community:
   path:
     domain: http://localhost:9099
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.max.nowcoder.dao.UserMapper;
 import com.max.nowcoder.entity.User;
 import com.max.nowcoder.service.UserService;
+import com.max.nowcoder.utils.CommunityConstant;
 import com.max.nowcoder.utils.CommunityUtil;
 import com.max.nowcoder.utils.MyMailSender;
 import org.apache.commons.lang3.StringUtils;
@@ -26,8 +27,9 @@ import java.util.Random;
  * @author: max-qaq
  * @create: 2022-05-18 19:32
  **/
+
 @Service
-public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements UserService {
+public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements UserService , CommunityConstant {
     @Autowired
     private UserMapper userMapper;
 
@@ -42,10 +44,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
     private String domain;
 
     //项目名
-    @Value("${server.servlet.context.path}")
+    @Value("${server.servlet.context-path}")
     private String contextPath;
 
 
+    /**
+     * 注册功能
+     * @param user
+     * @return
+     * @throws MessagingException
+     */
     @Override
     public Map<String, Object> register(User user) throws MessagingException {
         Map<String, Object> map = new HashMap<>();
@@ -89,6 +97,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         userMapper.insert(user);
 
         //发送激活邮件
+        user = userMapper.selectOne(new LambdaQueryWrapper<User>().eq(User::getEmail,user.getEmail()));
         Context context = new Context();
         context.setVariable("email",user.getEmail());
         String url = domain + contextPath + "/activation/" + user.getId() + "/" + user.getActivationCode();
@@ -97,5 +106,27 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
         mailSender.sendMail(user.getEmail(),"激活账号",content);
 
         return map;
+    }
+
+    /**
+     * 激活用户
+     * @param userId
+     * @param code
+     * @return
+     */
+    @Override
+    public int activation(int userId, String code){
+        User user = userMapper.selectById(userId);
+        if (user.getStatus() == 1){
+            return ACTIVATION_REPEAT;
+        }else if (user.getActivationCode().equals(code)){
+            //激活账号
+            user.setStatus(1);
+            userMapper.updateById(user);
+            //返回激活成功
+            return ACTIVATION_SUCCESS;
+        }else {
+            return ACTIVATION_FAIL;
+        }
     }
 }
