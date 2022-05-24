@@ -1,5 +1,6 @@
 package com.max.nowcoder.controller;
 
+import com.google.code.kaptcha.Producer;
 import com.max.nowcoder.entity.User;
 import com.max.nowcoder.service.UserService;
 import com.max.nowcoder.utils.CommunityConstant;
@@ -11,7 +12,14 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import javax.imageio.ImageIO;
 import javax.mail.MessagingException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Map;
 
 /**
@@ -25,6 +33,9 @@ public class LoginController implements CommunityConstant {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    Producer kaptchaProducer;
 
     @GetMapping("/register")
     public String getRegisterPage(){
@@ -69,4 +80,19 @@ public class LoginController implements CommunityConstant {
         return "/site/operate-result";
     }
 
+    /**
+     * 获取验证码
+     */
+    @GetMapping("/kaptcha")
+    public void getKaptcha(HttpServletResponse response, HttpSession session) throws IOException {
+        //生成验证码
+        String text = kaptchaProducer.createText();
+        BufferedImage image = kaptchaProducer.createImage(text);
+        //验证码存入session
+        session.setAttribute("Kaptcha",text);
+        //图片输出给浏览器
+        response.setContentType("image/png");
+        OutputStream os = response.getOutputStream();
+        ImageIO.write(image,"png",os);
+    }
 }
