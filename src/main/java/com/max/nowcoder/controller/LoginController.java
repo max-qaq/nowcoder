@@ -4,17 +4,17 @@ import com.google.code.kaptcha.Producer;
 import com.max.nowcoder.entity.User;
 import com.max.nowcoder.service.UserService;
 import com.max.nowcoder.utils.CommunityConstant;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 import javax.imageio.ImageIO;
 import javax.mail.MessagingException;
 import javax.servlet.ServletOutputStream;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.awt.image.BufferedImage;
@@ -36,6 +36,10 @@ public class LoginController implements CommunityConstant {
 
     @Autowired
     Producer kaptchaProducer;
+
+    //项目名
+    @Value("${server.servlet.context-path}")
+    private String contextPath;
 
     @GetMapping("/register")
     public String getRegisterPage(){
@@ -94,5 +98,43 @@ public class LoginController implements CommunityConstant {
         response.setContentType("image/png");
         OutputStream os = response.getOutputStream();
         ImageIO.write(image,"png",os);
+    }
+
+    /**
+     * 登录
+     */
+    @PostMapping("/login")
+    public String login(String username, String password, String code, boolean rememberme,
+                        Model model,HttpSession session,HttpServletResponse response){
+        //检查验证码
+        String kaptcha = (String) session.getAttribute("Kaptcha");
+        if (StringUtils.isBlank(kaptcha) || StringUtils.isBlank(code) || !kaptcha.equalsIgnoreCase(code)){
+            //验证码不通过
+            model.addAttribute("codeMsg","验证码不正确");
+            return "/site/login";
+        }
+        //检查账号密码
+        int expiredSeconds = rememberme ? REMEMBER_EXPIRED_SECONDS : DEFAULT_EXPIRED_SECONDS;
+        Map<String, Object> login = userService.login(username, password, expiredSeconds);
+        if (login.containsKey("ticket")){
+            Cookie cookie = new Cookie("ticket",login.get("ticket").toString());
+            cookie.setPath(contextPath);
+            cookie.setMaxAge(expiredSeconds);
+            response.addCookie(cookie);
+            //成功
+            return "redirect:/index";
+        }else{
+            //失败
+            model.addAttribute("usernameMsg",login.get("usernameMsg"));
+            model.addAttribute("passwordMsg",login.get("passwordMsg"));
+            return "/site/login";
+        }
+    }
+
+    //退出
+    @GetMapping("/logout")
+    public String logout(@CookieValue("ticket") String ticket){
+        userService.logout(ticket);
+        return "redirect:/login";
     }
 }
