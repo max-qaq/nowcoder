@@ -9,11 +9,13 @@ import com.max.nowcoder.entity.User;
 import com.max.nowcoder.service.UserService;
 import com.max.nowcoder.utils.CommunityConstant;
 import com.max.nowcoder.utils.CommunityUtil;
+import com.max.nowcoder.utils.HostHolder;
 import com.max.nowcoder.utils.MyMailSender;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
@@ -43,6 +45,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
 
     @Autowired
     private LoginTicketMapper loginTicketMapper;
+
+    @Autowired
+    private HostHolder hostHolder;
     //域名
     @Value("${community.path.domain}")
     private String domain;
@@ -178,5 +183,32 @@ public class UserServiceImpl extends ServiceImpl<UserMapper,User> implements Use
     @Override
     public void logout(String ticket) {
         loginTicketMapper.updateStatus(ticket,1);
+    }
+
+    //更新头像url
+    @Override
+    public int updateHeader(int userId, String headerUrl) {
+        User user = userMapper.selectById(userId);
+        user.setHeaderUrl(headerUrl);
+        return userMapper.updateById(user);
+    }
+
+    @Override
+    public Map<String, Object> updatePassword(String oldPassword, String newPassword, Model model) {
+        User user = hostHolder.getUser();
+        Map<String,Object> map = new HashMap<>();
+        oldPassword = CommunityUtil.md5(oldPassword + user.getSalt());
+        if (oldPassword.equals(user.getPassword())){
+            //密码相等，更改密码
+            newPassword = CommunityUtil.md5(newPassword + user.getSalt());
+            user.setPassword(newPassword);
+            userMapper.updateById(user);
+        }
+        //不等，返回错误信息
+        else{
+            map.put("oldPasswordMsg","原密码错误！");
+        }
+
+        return map;
     }
 }

@@ -24,6 +24,7 @@ server:
 community:
   path:
     domain: http://localhost:9099
+    upload: D:/Desktop/nowcoder
 
 mybatis-plus:
   configuration:
